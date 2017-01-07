@@ -29,7 +29,7 @@ Motor1PWM  = 1 # gpio pin 12 = wiringpi no. 1 (BCM 18)
 Motor1AIN1 = 4 # gpio pin 16 = wiringpi no. 4 (BCM 23)
 Motor1AIN2 = 5 # gpio pin 18 = wiringpi no. 5 (BCM 24)
 MotorStandby = 6 # gpio pin 22 = wiringpi no. 6 (BCM 25)
-Motor2PWM = 24 # gpio pin 35 = wiringpi no. 24 (BCM 19)
+Motor2PWM = 23 # gpio pin 33 = wiringpi no. 23 (BCM 13)
 Motor2BIN1 = 21 # gpio pin 29 = wiringpi no. 21 (BCM 5)
 Motor2BIN2 = 22 # gpio pin 31 = wiringpi no. 22 (BCM 6)
 
@@ -69,7 +69,7 @@ while True:
     print(rt)
     print(lt)
     speed1 = (rt+1)*512
-    speed2 = (lt+1)/512
+    speed2 = (lt+1)*512
     motorspeed(int(speed1),int(speed2))
 	
 #    print(speed1)
