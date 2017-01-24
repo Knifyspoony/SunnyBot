@@ -1,3 +1,4 @@
+
 """Test script for using pygame to read in xbox 360 controller
 with ds4drv  running as a daemon
 DS4  controller axis maps:
@@ -59,17 +60,41 @@ def motorspeed(speed1, speed2):
     wiringpi.pwmWrite(Motor1PWM, speed1) #motorspeed from 0 to 1024
     wiringpi.pwmWrite(Motor2PWM, speed2) 
 
+motorspeed(0,0) #start with 0 speed
 while True:
     pygame.event.get()
 #    for x in range(0,joy.get_numaxes()):
 #        print('Axis'+str(x)+': '+str(joy.get_axis(x)))
    
     rt = joy.get_axis(5)
-    lt = joy.get_axis(2)
-    print(rt)
-    print(lt)
-    speed1 = (rt+1)*512
-    speed2 = (lt+1)*512
+#    lt = joy.get_axis(2)
+    ls = joy.get_axis(0)
+    mlb = (ls+1)/2		#how speed is balanced across motors
+    mrb = 1-mlb
+
+#    left motor speed
+    if mlb >= 0.5:
+       ml = (rt+1)/2
+    else:
+       ml = 2*mlb*rt
+    print(ml)
+
+#    right motor speed
+    if mrb >= 0.5:
+       mr = (rt+1)/2
+    else:
+       mr = 2*mrb*rt
+    print(mr)
+
+#    print(rt)
+#    print(lt)
+#    print(ls)
+#    print("Motor L balance value = ", mlb)
+#    speed1 = (lt+1)*512
+    speed1 = abs(ml*1024)
+
+#    speed2 = (rt+1)*512
+    speed2 = abs(mr*1024)
     motorspeed(int(speed1),int(speed2))
 	
 #    print(speed1)
