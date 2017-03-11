@@ -84,17 +84,23 @@ direction = 1.0 # 1 for forward direction
 while True:
     pygame.event.get()   
     rt = joy.get_axis(5)
-#    print("rt: " + str(rt))
     lt = joy.get_axis(2)
     ls = joy.get_axis(0)
+    baseSpeed = (rt+1)/2 #convert +/-1 to 0-1
+    if baseSpeed <= 0.01: #if right trigger isn't pulled
+        baseSpeed = (lt+1)/2
+        if baseSpeed <= 0.01: #if neither trigger is pulled
+            sensitivity = 1.0 #allow spinning on the spot if no trigger is being pulled
+            direction = 1.0 #forward
+        else:    #if left trigger is pulled
+            sensitivity = 0.5 #normal steering
+            direction = -1.0 #backward
+    else: #if right trigger is pulled
+        sensitivity = 0.5 #normal steering
+        direction = 1.0 #forward       
+#   motor speed balance
     mlb = ls*sensitivity		#how speed is balanced across motors
     mrb = mlb*-1.0
-    baseSpeed = (rt+1)/2
-    direction = 1.0 #forward
-    if baseSpeed <= 0.01:
-        baseSpeed = (lt+1)/2
-        direction = -1.0 #backward       
-#   motor speed balance
 #   left motor speed
     ml = direction*(baseSpeed + mlb)
 #   right motor speed 
