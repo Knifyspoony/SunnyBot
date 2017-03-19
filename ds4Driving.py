@@ -1,6 +1,8 @@
 
-"""Test script for using pygame to read in playstation dual shock 4 controller
-with ds4drv  running as a daemon
+"""Script for using pygame to read in playstation dual shock 4 controller
+with ds4drv  running as a daemon. Controller used to drive SunnyBot using
+differential steering calculated using a proportional controller.
+Also servo control of a tower pro SG90 servo on the right stick.
 DS4  controller axis maps:
 Axis0: Left stick l-r (-1 left, 1 right)
 Axis1: Left stick u-d (-1 up, 1 down)
@@ -8,6 +10,15 @@ Axis2: Left trigger (-1 unpressed, 1 completely pressed)
 Axis3: Right stick l-r (-1 left, 1 right)
 Axis4: Right stick u-d (-1 up, 1 down)
 Axis5: Right trigger (-1 unpressed, 1 completely pressed)
+
+Button13: UP
+Button14: DOWN
+
+Servo info:
+7% duty cycle = -90 degrees (anti-clockwise)
+16% duty cycle = 0 degrees
+25% duty cycle = +90 degrees (clockwise) makes some odd sounds though limit to 24
+
 """
 
 import pygame
@@ -34,6 +45,8 @@ Motor2PWM = 23 # gpio pin 33 = wiringpi no. 23 (BCM 13)
 Motor2BIN1 = 21 # gpio pin 29 = wiringpi no. 21 (BCM 5)
 Motor2BIN2 = 22 # gpio pin 31 = wiringpi no. 22 (BCM 6)
 
+ServoPWM = 15 #gpio pin 8 = wiringpi no. 15 (BCM 14)
+
 # Initialize PWM output
 wiringpi.wiringPiSetup()
 wiringpi.pinMode(Motor1PWM, 2)     # PWM mode
@@ -45,7 +58,6 @@ wiringpi.pinMode(Motor2PWM, 2)     # PWM mode
 wiringpi.pinMode(Motor2BIN1, 1)    #Digital out mode
 wiringpi.pinMode(Motor2BIN2, 1)    #Digital out mode
 
-
 wiringpi.pwmWrite(Motor1PWM, 0)    # OFF
 wiringpi.pwmWrite(Motor2PWM, 0)    # OFF
 wiringpi.digitalWrite(Motor1AIN1, 1) #forward mode
@@ -54,6 +66,8 @@ wiringpi.digitalWrite(Motor2BIN1, 1)
 wiringpi.digitalWrite(Motor2BIN2, 0)
 wiringpi.digitalWrite(MotorStandby, 1) #enabled
 
+wiringpi.pinMode(ServoPWM,1) #output for software PWM
+wiringpi.softPwmCreate(ServoPWM,16,50) #50Hz softpwm starting at mid position 
 
 # Set Motor Speed
 def motorspeed(speed1, speed2):
@@ -79,13 +93,17 @@ motorspeed(0,0) #start with 0 speed
 rt = 0
 sensitivity = 0.5 #define between 0 and 1 where 1 is most sensitive
 direction = 1.0 # 1 for forward direction
-
+duty = 16 #default servo duty cycle for upright position
 
 while True:
     pygame.event.get()   
-    rt = joy.get_axis(5)
-    lt = joy.get_axis(2)
-    ls = joy.get_axis(0)
+    rt = joy.get_axis(5) #right trigger
+    lt = joy.get_axis(2) #left trigger
+    ls = joy.get_axis(0) #left stick left-right
+    rs = joy.get_axis(4) #right stick up-down
+    up = joy.get_button(13) #up on the D pad
+    down = joy.get_button(14) #down on the D pad
+
     baseSpeed = (rt+1)/2 #convert +/-1 to 0-1
     if baseSpeed <= 0.01: #if right trigger isn't pulled
         baseSpeed = (lt+1)/2
@@ -117,4 +135,19 @@ while True:
     print("ml: " + str(ml) + " mr: " + str(mr))
 
     motorspeed(ml,mr)
+
+    #servo control
+    #duty = (((rs+1)/2)*17)+7 #convert -1 to 1 into 0-1 then multiply up to 0-17, add constant for 7-24
+    if(up):
+        duty += 1
+    elif(down):
+        duty -= 1
+
+    if duty < 7:
+        duty = 7
+    elif duty > 24:
+        duty = 24
+
+    wiringpi.softPwmWrite(ServoPWM, duty)
+    print('Duty: ', str(duty))
     sleep(0.1) #limit the frequency to 10Hz
