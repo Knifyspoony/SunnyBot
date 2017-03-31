@@ -95,6 +95,11 @@ sensitivity = 0.5 #define between 0 and 1 where 1 is most sensitive
 direction = 1.0 # 1 for forward direction
 duty = 16 #default servo duty cycle for upright position
 
+while(rt == 0 or lt == 0):
+    pygame.event.get() #loop to stop the robot running  away until the left and right triggers have been initialised
+    rt = joy.get_axis(5) #right trigger
+    lt = joy.get_axis(2) #left trigger
+
 while True:
     pygame.event.get()   
     rt = joy.get_axis(5) #right trigger
@@ -132,7 +137,7 @@ while True:
         mr = 1.0
     elif mr < -1.0:
         mr = -1.0
-    print("ml: " + str(ml) + " mr: " + str(mr))
+#    print("ml: " + str(ml) + " mr: " + str(mr))
 
     motorspeed(ml,mr)
 
@@ -140,14 +145,21 @@ while True:
     #duty = (((rs+1)/2)*17)+7 #convert -1 to 1 into 0-1 then multiply up to 0-17, add constant for 7-24
     if(up):
         duty += 1
+        servo_flag = 1
     elif(down):
         duty -= 1
+        servo_flag = 1
+    else:
+        servo_flag = 0
 
-    if duty < 7:
-        duty = 7
-    elif duty > 24:
-        duty = 24
+    if duty < 15:
+        duty = 15
+    elif duty > 22:
+        duty = 22
 
     wiringpi.softPwmWrite(ServoPWM, duty)
-    print('Duty: ', str(duty))
-    sleep(0.1) #limit the frequency to 10Hz
+#    print('Duty: ', str(duty))
+    if(servo_flag):
+        sleep(0.2)
+    else:
+        sleep(0.01) #limit the frequency to 100Hz

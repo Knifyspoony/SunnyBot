@@ -132,7 +132,7 @@ def follow_left_wall():
         event = 'lost left wall'
         m1_speed = 0
         m2_speed = 0
-    elif(forward_distance <= 15.0):
+    elif(forward_distance <= 20.0):
         event = 'impact detected'
         m1_speed = 0
         m2_speed = 0
@@ -144,11 +144,11 @@ def follow_left_wall():
     return m1_speed, m2_speed, event
 
 def follow_right_wall():
-    if(right_distance >= 30.0):
+    if(right_distance >= 20.0):
         event = 'lost right wall'
         m1_speed = 0
         m2_speed = 0
-    elif(forward_distance <= 15.0):
+    elif(forward_distance <= 20.0):
         event = 'impact detected'
         m1_speed = 0
         m2_speed = 0
@@ -175,11 +175,11 @@ def left_turn():
     return m1_speed, m2_speed, event
     
 def right_turn():
-    if(left_distance <= 30.0 and forward_distance >= 20.0):
+    if(left_distance <= 30.0 and forward_distance >= 26.0):
         event = 'found left wall'
         m1_speed = 0
         m2_speed = 0
-    elif(right_distance <= 30.0 and forward_distance >= 20.0):
+    elif(right_distance <= 30.0 and forward_distance >= 26.0):
         event = 'found right wall'
         m1_speed = 0
         m2_speed = 0
@@ -198,12 +198,16 @@ while True:
     pygame.event.get()   #get pygame values for reading in ds4 buttons
     triangle = joy.get_button(3)
     cross = joy.get_button(0)
+    if(cross == 1):
+        start = 1
+    else:
+        start = 0
     #while go button is pressed
-    while(cross == 1):
+    while(start == 1):
 #        sleep(0.5) #debugging slow down
         readsensors() #read the sensor values
 #        print('Left: '+ str(left_distance)+', Right: '+str(right_distance)+', Forward: '+str(forward_distance))  
-#        print('State: ' + state)
+        print('State: ' + state)
         #follow right wall until no longer detected or about to hit something
         if(state == 'follow_right_wall'):
             m1_speed, m2_speed, event = follow_right_wall()
@@ -247,3 +251,7 @@ while True:
        
         pygame.event.get()   #get pygame values for reading in ds4 buttons
         cross = joy.get_button(0)
+        triangle = joy.get_button(3)
+        if(triangle == 1):
+            start = 0 #stop the loop if triangle pressed
+            motorspeed(0,0)
