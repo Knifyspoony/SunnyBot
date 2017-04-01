@@ -1,4 +1,5 @@
 
+
 """Line following script with ds4 controller as supervisor
 DS4  controller axis maps:
 Axis0: Left stick l-r (-1 left, 1 right)
@@ -103,8 +104,12 @@ def readadc(adcnum):
         return adcout
 
 motorspeed(0,0) #start with zero motor speed
-base_speed = 0.6 #set base speed as half speed
-Kp = 0.1
+base_speed = 0.9 #set base speed
+Kp = 0.01
+#Ki = 0.0
+#integral = 0.0
+reference = 20.0
+calibrated = 0
 
 
 while True:
@@ -112,8 +117,13 @@ while True:
     pygame.event.get()   #get pygame values for reading in ds4 buttons
     triangle = joy.get_button(3)
     cross = joy.get_button(0)
-    #while go button is pressed
-    while(cross == 1):
+    if(cross == 1):
+        start = 1
+    else:
+        start = 0
+    calibrated = 0
+
+    while(start == 1):
 #        print('Cross pressed')
         left_sensor = (readadc(7)/1024.0)*3.3 + 0.01
         right_sensor = (readadc(1)/1024.0)*3.3 + 0.01
@@ -122,27 +132,36 @@ while True:
         right_distance = 12.5/right_sensor - 0.42
         forward_distance = 12.5/forward_sensor - 0.42
 #        print('Left: '+ str(left_distance)+', Right: '+str(right_distance)+', Forward: '+str(forward_distance))
-        if(left_distance <= 30 and right_distance <=30): #limits of sensor
-            error = left_distance - right_distance
+        if(calibrated ==0): #follow the right wall at the distance it started at
+            reference = right_distance
+            calibrated = 1
+            print('Calibrated at: ' + str(reference))
+        if(right_distance <=30): #limits of sensor
+            error = reference - right_distance
         else:
-            error = 0
+            error = left_distance - reference
+#        integral = integral + error
+#        if(Ki*integral > 0.1):
+#            integral = 0.1/Ki
+#        elif(Ki*integral < -0.1):
+#            integral = -0.1/Ki
  #       print(error)
-        m1_speed = base_speed - Kp*error
-        m2_speed = base_speed + Kp*error
-        if(m1_speed > 1.0):
+        m1_speed = base_speed - Kp*error #- Ki*integral
+        m2_speed = base_speed + Kp*error #+ Ki*integral
+        if(m1_speed >= 1.0):
            # m1_overshoot = m1_speed - 1.0
             m1_speed = 1.0
-        elif (m1_speed < -1.0):
+        elif (m1_speed <= 0.0):
            # m1_overshoot = m1_speed + 1.0
-            m1_speed = -1.0
+            m1_speed = 0.0
         #else
           #  m1_overshoot = 0
-        if(m2_speed > 1.0):
+        if(m2_speed >= 1.0):
            # m2_overshoot = m2_speed - 1.0
             m2_speed = 1.0
-        elif (m2_speed < -1.0):
+        elif (m2_speed <= 0.0):
            # m2_overshoot = m2_speed + 1.0
-            m2_speed = -1.0
+            m2_speed = 0.0
        # else:
           #  m2_overshoot = 0
         if(forward_distance <= 30):
@@ -152,3 +171,7 @@ while True:
  #       print('Motor1 speed: ' + str(m1_speed) + ' Motor2 speed: ' + str(m2_speed))
         pygame.event.get()   #get pygame values for reading in ds4 buttons
         cross = joy.get_button(0)
+        triangle = joy.get_button(3)
+        if(triangle == 1):
+            start = 0
+        sleep(0.01) #limit refresh to 100Hz
