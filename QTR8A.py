@@ -17,8 +17,8 @@ class QTR8A:
 
     # calibrate the sensors, taking in the duration of calibration in seconds
     def calibrate(self, duration=1):
-        # do a cycle every 100ms
-        num_cycles = duration*10
+        # do a cycle every 10ms
+        num_cycles = duration*100
         # start by resetting the calibration
         self.reset_calibration()
         # create a blank array for storing the values
@@ -28,7 +28,7 @@ class QTR8A:
             # store values for each sensor and each cycle
             values[i,:] = self.read_raw()
             # wait before running the next check
-            sleep(0.1)
+            sleep(0.01)
         # check the read in values for maximums and minimums
         # an individual set is stored for each sensor
         for i in range(0,self.num_sensors):

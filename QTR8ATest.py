@@ -22,4 +22,7 @@ print(values)
 while True:
     line = line_sensors.read_line()
     print(line)
+    values = line_sensors.read_calibrated()
+    print(values)
+
     sleep(1)    

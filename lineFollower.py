@@ -87,8 +87,8 @@ def motorspeed(speed1, speed2):
     wiringpi.pwmWrite(Motor2PWM, int(abs(speed2)*1024)) 
 
 motorspeed(0,0) #start with zero motor speed
-base_speed = 0.3 #set base speed as half speed
-Kp = 0.7
+base_speed = 0.25 #set base speed
+Kp = 1.5
 
 
 while True:
@@ -96,41 +96,72 @@ while True:
     pygame.event.get()   #get pygame values for reading in ds4 buttons
     triangle = joy.get_button(3)
     cross = joy.get_button(0)
+    square = joy.get_button(2)
+    start = cross
+    up = joy.get_button(13) #up on the D pad
+    down = joy.get_button(14) #down on the D pad
 #check for the calibrate button to get pressed
     if(triangle == 1):
-        print('Triangle pressed')
-        motorspeed(0.7, -0.7) #set the robot going in a circle
+        print('Calibration started')
+        motorspeed(1.0, -1.0) #set the robot going in a circle
         line_sensors.calibrate(2) #calibrate for 2 seconds
         motorspeed(0,0) #stop the robot
 
+#check for base_speed changes
+    if(up):
+        base_speed = base_speed + 0.05
+        print('Base speed now: ' + str(base_speed))
+        sleep(0.5)
+    elif(down):
+        base_speed = base_speed - 0.05
+        print('Base speed now: ' + str(base_speed))
+        sleep(0.5)
+
+    if(start):
+        print('Starting line following')
+
     #while go button is pressed
-    while(cross == 1):
+    while(start == 1):
 #        print('Cross pressed')
         line_position = line_sensors.read_line() #read in the line sensor values
-        if(line_position > 0):
+# calibrated values are between 0 and 1000. 0 is white surface, 1000 is black. Index 0 is right hand sensor, index 7 is left most
+        line_values = line_sensors.read_calibrated()
+        if(line_values[0] >= 900):
+            error = -1.0
+        elif(line_values[7] >= 900):
+            error = 1.0 
+        elif(line_position > 0):
             error = line_position/500 - 1.0 #line position is 0-1000, convert to -1 to 1
         else:
             error = -1.0
  #       print(error)
         m1_speed = base_speed - Kp*error
         m2_speed = base_speed + Kp*error
+
+        m1_overshoot = m1_speed - 1.0
+        m2_overshoot = m2_speed - 1.0
+        if(m1_overshoot <= 0):
+            m1_overshoot = 0
+        if(m2_overshoot <=0):
+            m2_overshoot = 0
+
+        m1_speed = m1_speed - m2_overshoot #carry over overly positive motor speeds
+        m2_speed = m2_speed - m1_overshoot 
+
         if(m1_speed > 1.0):
-           # m1_overshoot = m1_speed - 1.0
             m1_speed = 1.0
         elif (m1_speed < -1.0):
-           # m1_overshoot = m1_speed + 1.0
             m1_speed = -1.0
-        #else
-          #  m1_overshoot = 0
         if(m2_speed > 1.0):
-           # m2_overshoot = m2_speed - 1.0
             m2_speed = 1.0
         elif (m2_speed < -1.0):
-           # m2_overshoot = m2_speed + 1.0
             m2_speed = -1.0
-       # else:
-          #  m2_overshoot = 0
         motorspeed(m1_speed, m2_speed)
  #       print('Motor1 speed: ' + str(m1_speed) + ' Motor2 speed: ' + str(m2_speed))
         pygame.event.get()   #get pygame values for reading in ds4 buttons
         cross = joy.get_button(0)
+        square = joy.get_button(2)
+        if(square):
+            start = 0 #stop if square is pressed
+            print('Stopping line following')
+        sleep(0.01)
