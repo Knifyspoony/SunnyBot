@@ -17,8 +17,8 @@ class QTR8A:
 
     # calibrate the sensors, taking in the duration of calibration in seconds
     def calibrate(self, duration=1):
-        # do a cycle every 10ms
-        num_cycles = duration*100
+        # do a cycle every 100ms
+        num_cycles = duration*10
         # start by resetting the calibration
         self.reset_calibration()
         # create a blank array for storing the values
@@ -28,7 +28,7 @@ class QTR8A:
             # store values for each sensor and each cycle
             values[i,:] = self.read_raw()
             # wait before running the next check
-            sleep(0.01)
+            sleep(0.1)
         # check the read in values for maximums and minimums
         # an individual set is stored for each sensor
         for i in range(0,self.num_sensors):
@@ -79,12 +79,15 @@ class QTR8A:
         values = self.read_calibrated()
         # store the max value and where it is in the array
         max = np.max(values)
+        min = np.min(values)
         index = np.argmax(values)
         # define the calibration constant
         k = 1000/(self.num_sensors-1)
         # check the max sensor against the sensors either side
         # calculate a representative 0-1000 number for the line position
-        if index == 0:
+        if abs(max - min) <= 300: #don't trust the results if the minimum and maximum are too close
+            line = -1
+        elif index == 0:
             offset = values[index+1]/(max*2)
             line = (index + offset)*k
         elif index == self.num_sensors-1:

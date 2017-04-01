@@ -89,7 +89,7 @@ def motorspeed(speed1, speed2):
 motorspeed(0,0) #start with zero motor speed
 base_speed = 0.25 #set base speed
 Kp = 1.5
-
+error = 0
 
 while True:
     motorspeed(0,0) #turn the motors off!
@@ -133,8 +133,8 @@ while True:
         elif(line_position > 0):
             error = line_position/500 - 1.0 #line position is 0-1000, convert to -1 to 1
         else:
-            error = -1.0
- #       print(error)
+            error = error #keep the error the same
+        print('Error is: ' + str(error))
         m1_speed = base_speed - Kp*error
         m2_speed = base_speed + Kp*error
 
